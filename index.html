@@ -1,0 +1,1746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LeaveDesk</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#0b0d12;--surface:#13161e;--card:#1a1e28;--card2:#1f2436;
+  --border:#252a3a;--border2:#2e3448;
+  --accent:#f5c842;--green:#34d399;--red:#f87171;--purple:#818cf8;--blue:#38bdf8;
+  --orange:#fb923c;--pink:#f472b6;
+  --text:#eef0f6;--text2:#8892a4;--muted:#4b5568;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:10px}
+
+/* ── LOGIN ── */
+#loginScreen{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 20% 80%,#1a1f3a 0%,transparent 60%),
+             radial-gradient(ellipse at 80% 20%,#1a2a1a 0%,transparent 60%),var(--bg);
+}
+.login-wrap{width:420px}
+.login-card{background:var(--surface);border:1px solid var(--border2);border-radius:24px;padding:48px 40px;box-shadow:0 32px 80px rgba(0,0,0,.5)}
+.login-logo{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.login-logo-icon{width:38px;height:38px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.login-logo-text{font-family:'Syne',sans-serif;font-size:22px;font-weight:800}
+.login-logo-text span{color:var(--accent)}
+.login-tagline{color:var(--text2);font-size:13px;margin-bottom:36px;margin-top:4px}
+.field{margin-bottom:20px}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:7px;letter-spacing:.08em;text-transform:uppercase}
+.field input,.field select,.field textarea{
+  width:100%;background:var(--card);border:1.5px solid var(--border2);color:var(--text);
+  border-radius:12px;padding:13px 16px;font-family:'DM Sans',sans-serif;font-size:14px;
+  outline:none;transition:border .2s,box-shadow .2s;
+}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(245,200,66,.1)}
+.field textarea{resize:vertical;min-height:80px}
+.err-msg{color:var(--red);font-size:12px;margin-top:-12px;margin-bottom:16px;display:none;padding-left:2px}
+
+/* ── BUTTONS ── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  padding:12px 22px;border-radius:11px;font-family:'DM Sans',sans-serif;
+  font-size:13px;font-weight:600;cursor:pointer;border:none;
+  transition:all .15s;white-space:nowrap;
+}
+.btn:hover:not(:disabled){filter:brightness(1.1);transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.3)}
+.btn:active:not(:disabled){transform:translateY(0);box-shadow:none}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:var(--accent);color:#000;width:100%}
+.btn-green{background:var(--green);color:#000}
+.btn-red{background:var(--red);color:#fff}
+.btn-blue{background:var(--blue);color:#000}
+.btn-ghost{background:rgba(255,255,255,.06);border:1px solid var(--border2);color:var(--text)}
+.btn-ghost:hover:not(:disabled){background:rgba(255,255,255,.1)}
+.btn-icon{padding:8px;border-radius:8px;width:32px;height:32px}
+.btn-xs{font-size:11px;padding:6px 12px;border-radius:8px;font-weight:500}
+.spin{width:15px;height:15px;border:2px solid rgba(0,0,0,.2);border-top-color:#000;border-radius:50%;animation:spin .6s linear infinite;display:none;flex-shrink:0}
+.spin-white{border:2px solid rgba(255,255,255,.2);border-top-color:#fff}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── APP SHELL ── */
+#app{display:none;min-height:100vh;display:none}
+.sidebar{
+  position:fixed;left:0;top:0;bottom:0;width:220px;
+  background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;z-index:50;padding:20px 12px;
+}
+.sidebar-logo{display:flex;align-items:center;gap:9px;padding:8px 8px 24px}
+.sidebar-logo-icon{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.sidebar-logo-text{font-family:'Syne',sans-serif;font-size:17px;font-weight:800}
+.sidebar-logo-text span{color:var(--accent)}
+.nav-section{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);padding:0 10px;margin-bottom:6px;margin-top:8px}
+.nb{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;
+  font-size:13px;font-weight:500;background:transparent;border:none;
+  color:var(--text2);cursor:pointer;transition:all .15s;width:100%;text-align:left;margin-bottom:2px;
+}
+.nb:hover{background:var(--card);color:var(--text)}
+.nb.on{background:linear-gradient(135deg,rgba(245,200,66,.15),rgba(245,200,66,.05));color:var(--accent);border:1px solid rgba(245,200,66,.2)}
+.nb .nb-icon{font-size:16px;width:20px;flex-shrink:0}
+.sidebar-bottom{margin-top:auto;padding-top:16px;border-top:1px solid var(--border)}
+.user-card{background:var(--card);border-radius:12px;padding:12px;margin-bottom:10px}
+.user-name{font-size:13px;font-weight:600;margin-bottom:2px}
+.user-role{font-size:11px;color:var(--text2)}
+.admin-badge{background:var(--accent);color:#000;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;letter-spacing:.04em;display:inline-block;margin-left:6px}
+.staff-badge{background:var(--blue);color:#000;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;letter-spacing:.04em;display:inline-block;margin-left:6px}
+
+/* ── MAIN CONTENT ── */
+.main{margin-left:220px;min-height:100vh;padding:28px 28px 40px}
+.page{display:none}
+.page.on{display:block}
+.page-header{margin-bottom:24px}
+.page-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:4px}
+.page-sub{color:var(--text2);font-size:13px}
+
+/* ── GREETING BANNER ── */
+.greeting-banner{
+  background:linear-gradient(135deg,var(--card) 0%,var(--card2) 100%);
+  border:1px solid var(--border2);border-radius:18px;padding:22px 28px;
+  margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+}
+.greeting-text{font-family:'Syne',sans-serif;font-size:20px;font-weight:700}
+.greeting-date{color:var(--text2);font-size:13px;margin-top:3px}
+
+/* ── STAT CARDS ── */
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+@media(max-width:900px){.sg{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:500px){.sg{grid-template-columns:1fr}}
+.sc{
+  background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:20px;position:relative;overflow:hidden;cursor:default;
+  transition:border-color .2s,transform .15s;
+}
+.sc:hover{border-color:var(--border2);transform:translateY(-2px)}
+.sc::after{content:'';position:absolute;top:0;right:0;width:60%;height:100%;opacity:.04;pointer-events:none}
+.sc.c1::after{background:linear-gradient(to right,transparent,var(--accent))}
+.sc.c2::after{background:linear-gradient(to right,transparent,var(--red))}
+.sc.c3::after{background:linear-gradient(to right,transparent,var(--green))}
+.sc.c4::after{background:linear-gradient(to right,transparent,var(--purple))}
+.sl{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--text2);margin-bottom:10px;font-weight:600}
+.sv{font-family:'Syne',sans-serif;font-size:38px;font-weight:800;line-height:1}
+.sc.c1 .sv{color:var(--accent)}.sc.c2 .sv{color:var(--red)}
+.sc.c3 .sv{color:var(--green)}.sc.c4 .sv{color:var(--purple)}
+.ss{font-size:11px;color:var(--text2);margin-top:6px;line-height:1.4}
+
+/* ── OFF DAY STRIP ── */
+.od-strip{
+  background:var(--surface);border:1px solid var(--border);
+  border-left:3px solid var(--purple);border-radius:14px;
+  padding:16px 22px;margin-bottom:20px;
+  display:flex;gap:32px;flex-wrap:wrap;align-items:center;
+}
+.od-item .od-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);margin-bottom:4px;font-weight:600}
+.od-item .od-val{font-family:'Syne',sans-serif;font-size:26px;font-weight:800}
+
+/* ── SECTION HEADER ── */
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.st{font-family:'Syne',sans-serif;font-size:16px;font-weight:700}
+
+/* ── TABLE ── */
+.tw{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:auto}
+table{width:100%;border-collapse:collapse}
+th{
+  background:var(--card);font-size:10px;text-transform:uppercase;
+  letter-spacing:.07em;color:var(--text2);padding:12px 16px;
+  text-align:left;font-weight:600;position:sticky;top:0;
+}
+td{padding:13px 16px;border-top:1px solid var(--border);font-size:13px;vertical-align:middle}
+tr:hover td{background:rgba(255,255,255,.018)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.04em}
+.b-booked{background:rgba(245,200,66,.15);color:var(--accent);border:1px solid rgba(245,200,66,.25)}
+.b-taken{background:rgba(52,211,153,.15);color:var(--green);border:1px solid rgba(52,211,153,.25)}
+.b-cancelled{background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.2)}
+.b-offday{background:rgba(129,140,248,.15);color:var(--purple);border:1px solid rgba(129,140,248,.25)}
+.b-leave{background:rgba(56,189,248,.15);color:var(--blue);border:1px solid rgba(56,189,248,.25)}
+.empty{text-align:center;padding:48px;color:var(--muted);font-size:13px}
+
+/* ── FILTER BAR ── */
+.fb{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.fb select{margin:0;flex:1;min-width:140px;font-size:12px;padding:8px 12px;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:9px;outline:none}
+
+/* ── WHO'S ON LEAVE STRIP ── */
+.ol-bar{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+.ol-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);white-space:nowrap;font-weight:600}
+.ol-chips{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.chip{border-radius:20px;padding:5px 13px;font-size:12px;font-weight:500;display:inline-flex;align-items:center;gap:5px}
+.chip-red{background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.25);color:var(--red)}
+.chip-purple{background:rgba(129,140,248,.12);border:1px solid rgba(129,140,248,.25);color:var(--purple)}
+.chip-yellow{background:rgba(245,200,66,.12);border:1px solid rgba(245,200,66,.25);color:var(--accent)}
+.chip-blue{background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.25);color:var(--blue)}
+
+/* ── LAYOUT 2-COL ── */
+.two-col{display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start}
+@media(max-width:1100px){.two-col{grid-template-columns:1fr}}
+
+/* ── CALENDAR ── */
+.cal-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;position:sticky;top:20px}
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.cal-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700}
+.cal-nav{display:flex;gap:6px}
+.cal-nav button{background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:.15s}
+.cal-nav button:hover{background:var(--card2);border-color:var(--accent)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-day-name{text-align:center;font-size:10px;font-weight:600;color:var(--muted);padding:4px 0;text-transform:uppercase;letter-spacing:.05em}
+.cal-day{
+  aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border-radius:8px;font-size:12px;cursor:pointer;position:relative;transition:.15s;
+  font-weight:500;
+}
+.cal-day:hover{background:var(--card2)}
+.cal-day.other-month{color:var(--muted)}
+.cal-day.today{background:rgba(245,200,66,.15);color:var(--accent);font-weight:700;border:1px solid rgba(245,200,66,.3)}
+.cal-day.has-leave{background:rgba(248,113,113,.15);color:var(--red);border:1px solid rgba(248,113,113,.25)}
+.cal-day.has-leave:hover{background:rgba(248,113,113,.25)}
+.cal-day.has-leave.today{background:rgba(248,113,113,.25);color:var(--red)}
+.cal-day.is-ph{color:var(--orange);font-style:italic}
+.cal-day .dot{width:4px;height:4px;border-radius:50%;background:currentColor;position:absolute;bottom:3px}
+.cal-tooltip{
+  position:absolute;background:var(--card2);border:1px solid var(--border2);border-radius:8px;
+  padding:6px 10px;font-size:11px;white-space:nowrap;z-index:99;
+  bottom:calc(100%+5px);left:50%;transform:translateX(-50%);pointer-events:none;
+  box-shadow:0 8px 24px rgba(0,0,0,.4);line-height:1.5;
+}
+.cal-legend{display:flex;gap:14px;margin-top:14px;flex-wrap:wrap}
+.cal-leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.cal-leg-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+
+/* ── STAFF DROPDOWN ON DASHBOARD ── */
+.staff-select-wrap{margin-bottom:16px}
+.staff-select-wrap select{
+  width:100%;max-width:320px;background:var(--card);border:1.5px solid var(--border2);
+  color:var(--text);border-radius:11px;padding:11px 14px;font-family:'DM Sans',sans-serif;
+  font-size:14px;font-weight:500;outline:none;transition:border .2s;margin:0;
+}
+.staff-select-wrap select:focus{border-color:var(--accent)}
+
+/* ── MODALS ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
+.overlay.show{display:flex}
+.modal{
+  background:var(--surface);border:1px solid var(--border2);border-radius:20px;
+  padding:32px;width:540px;max-width:100%;max-height:90vh;overflow-y:auto;
+  box-shadow:0 40px 100px rgba(0,0,0,.6);
+}
+.modal-title{font-family:'Syne',sans-serif;font-size:19px;font-weight:700;margin-bottom:24px;display:flex;align-items:center;gap:10px}
+.ma{display:flex;gap:9px;justify-content:flex-end;margin-top:8px}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+@media(max-width:480px){.fg{grid-template-columns:1fr}}
+.fg .full{grid-column:1/-1}
+.fg .field{margin-bottom:18px}
+
+/* ── INFO CALLOUT ── */
+.callout{border-radius:10px;padding:11px 14px;font-size:12px;margin-bottom:16px;line-height:1.6}
+.callout-green{background:rgba(52,211,153,.07);border:1px solid rgba(52,211,153,.2);color:var(--green)}
+.callout-red{background:rgba(248,113,113,.07);border:1px solid rgba(248,113,113,.2);color:var(--red)}
+.callout-yellow{background:rgba(245,200,66,.07);border:1px solid rgba(245,200,66,.2);color:var(--accent)}
+
+/* ── SETTINGS ── */
+.scard{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:20px}
+.scard-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.url-row{display:flex;gap:8px}
+.url-row input{margin:0;flex:1;font-size:12px;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:10px;padding:10px 13px;outline:none}
+
+/* ── PUBLIC HOLIDAYS ── */
+.ph-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.ph-item{
+  background:var(--card);border:1px solid var(--border2);border-radius:10px;
+  padding:12px 14px;display:flex;align-items:center;gap:12px;
+}
+.ph-date{font-size:12px;color:var(--orange);font-weight:600;min-width:70px}
+.ph-name{font-size:12px;color:var(--text);flex:1}
+.ph-del{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:16px;transition:.15s}
+.ph-del:hover{color:var(--red)}
+
+/* ── TOAST ── */
+#toast{
+  position:fixed;bottom:24px;right:24px;background:var(--card2);
+  border:1px solid var(--border2);border-radius:12px;padding:13px 20px;
+  font-size:13px;z-index:999;transform:translateY(60px);opacity:0;
+  transition:.25s cubic-bezier(.34,1.56,.64,1);pointer-events:none;
+  box-shadow:0 12px 40px rgba(0,0,0,.4);max-width:320px;
+}
+#toast.show{transform:translateY(0);opacity:1}
+#toast.ok{border-color:var(--green);color:var(--green)}
+#toast.err{border-color:var(--red);color:var(--red)}
+
+/* ── MOBILE ── */
+@media(max-width:768px){
+  .sidebar{display:none}
+  .main{margin-left:0;padding:16px}
+  .mobile-nav{
+    position:fixed;bottom:0;left:0;right:0;
+    background:var(--surface);border-top:1px solid var(--border);
+    display:flex;z-index:50;padding:8px 0 env(safe-area-inset-bottom,8px);
+  }
+  .mnb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px;background:transparent;border:none;color:var(--text2);cursor:pointer;font-size:10px;font-family:'DM Sans',sans-serif}
+  .mnb.on{color:var(--accent)}
+  .mnb-icon{font-size:18px}
+  .main{padding-bottom:80px}
+}
+@media(min-width:769px){.mobile-nav{display:none}}
+
+/* divider */
+.divider{height:1px;background:var(--border);margin:20px 0}
+</style>
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import {
+  getFirestore, collection, doc, getDocs, setDoc, updateDoc, onSnapshot, query, orderBy
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAUro-kFbmFoSb26Qy2fAaUc_-vVqhsiUI",
+  authDomain: "worktap-c601a.firebaseapp.com",
+  projectId: "worktap-c601a",
+  storageBucket: "worktap-c601a.firebasestorage.app",
+  messagingSenderId: "542031965629",
+  appId: "1:542031965629:web:229f7ab55f7f86bd7636d4"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// Expose Firestore helpers to global scope
+window._db = db;
+window._fs = { collection, doc, getDocs, setDoc, updateDoc, onSnapshot, query, orderBy };
+
+// Signal that Firebase is ready
+window._fbReady = true;
+document.dispatchEvent(new Event('fb-ready'));
+</script>
+</head>
+<body>
+
+<!-- ═══════════════ LOGIN ═══════════════ -->
+<div id="loginScreen">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="login-logo-icon">📋</div>
+        <div class="login-logo-text">Leave<span>Desk</span></div>
+      </div>
+      <div class="login-tagline">Leave management — Ipsos Kenya</div>
+
+      <div class="field">
+        <label>Phone Number</label>
+        <input type="tel" id="loginPhone" placeholder="e.g. 0712345678"
+               onkeydown="if(event.key==='Enter')doLogin()"/>
+      </div>
+      <div class="err-msg" id="loginErr">Phone number not recognised. Contact your admin.</div>
+      <button class="btn btn-primary" onclick="doLogin()">
+        <span class="spin" id="loginSpin"></span>Sign In
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ APP ═══════════════ -->
+<div id="app">
+
+  <!-- SIDEBAR (desktop) -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">📋</div>
+      <div class="sidebar-logo-text">Leave<span>Desk</span></div>
+    </div>
+
+    <div class="nav-section">Main</div>
+    <button class="nb on" data-p="dashboard" onclick="go('dashboard')">
+      <span class="nb-icon">🏠</span>Dashboard
+    </button>
+    <button class="nb" data-p="records" onclick="go('records')">
+      <span class="nb-icon">📄</span>All Records
+    </button>
+    <button class="nb" data-p="calendar" onclick="go('calendar')">
+      <span class="nb-icon">📅</span>Calendar
+    </button>
+    <button class="nb" data-p="holidays" onclick="go('holidays')">
+      <span class="nb-icon">🇰🇪</span>Public Holidays
+    </button>
+
+    <div class="nav-section admin-only">Admin</div>
+    <button class="nb admin-only" data-p="pending" onclick="go('pending')" id="pendingNavBtn">
+      <span class="nb-icon">🔔</span><span>Approvals</span><span id="pendingBadge" style="display:none;background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:20px;margin-left:auto">0</span>
+    </button>
+    <button class="nb admin-only" data-p="settings" onclick="go('settings')">
+      <span class="nb-icon">⚙️</span>Settings
+    </button>
+
+    <div class="sidebar-bottom">
+      <div class="user-card">
+        <div class="user-name" id="sidebarName">—</div>
+        <div class="user-role" id="sidebarRole">—</div>
+      </div>
+      <button class="btn btn-ghost" style="width:100%;font-size:12px" onclick="logout()">Sign out</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="page on" id="page-dashboard">
+      <div class="greeting-banner">
+        <div>
+          <div class="greeting-text" id="greetingText">Good morning!</div>
+          <div class="greeting-date" id="greetingDate"></div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-green admin-only" onclick="openAddLeave()" style="font-size:13px">+ Record Leave</button>
+          <button class="btn staff-only" id="reqLeaveBtn" onclick="openStaffRequest()" style="font-size:13px;background:var(--purple);color:#fff;display:none">✉️ Request Leave</button>
+        </div>
+      </div>
+
+      <!-- Who's on leave today -->
+      <div class="ol-bar">
+        <span class="ol-label">On Leave Today</span>
+        <div class="ol-chips" id="onLeaveNow"></div>
+      </div>
+
+      <!-- Staff selector (admin sees dropdown; staff sees their own) -->
+      <div class="staff-select-wrap admin-only">
+        <select id="staffSelect" onchange="renderDashboard()">
+          <option value="">— Select staff member to view —</option>
+        </select>
+      </div>
+
+      <!-- Stats -->
+      <div id="staffStats" style="display:none">
+        <div class="sg">
+          <div class="sc c1"><div class="sl">Leave Entitlement</div><div class="sv" id="sTotal">0</div><div class="ss">days per year</div></div>
+          <div class="sc c2"><div class="sl">Days Taken</div><div class="sv" id="sTaken">0</div><div class="ss">deducted from balance</div></div>
+          <div class="sc c3"><div class="sl">Balance Available</div><div class="sv" id="sAvail">0</div><div class="ss">remaining to use</div></div>
+          <div class="sc c4"><div class="sl">Days Booked</div><div class="sv" id="sBooked">0</div><div class="ss">upcoming — not deducted yet</div></div>
+        </div>
+        <div class="od-strip">
+          <div class="od-item"><div class="od-lbl">Off Entitlement</div><div class="od-val" style="color:var(--purple)" id="odTotal">0</div></div>
+          <div class="od-item"><div class="od-lbl">Off Taken</div><div class="od-val" style="color:var(--red)" id="odTaken">0</div></div>
+          <div class="od-item"><div class="od-lbl">Off Booked</div><div class="od-val" style="color:var(--accent)" id="odBooked">0</div></div>
+          <div class="od-item"><div class="od-lbl">Off Available</div><div class="od-val" style="color:var(--green)" id="odAvail">0</div></div>
+          <div style="font-size:11px;color:var(--muted);max-width:160px;line-height:1.6">Off days count every calendar day</div>
+        </div>
+
+        <!-- Leave history table -->
+        <div class="sh">
+          <div class="st" id="histTitle">Leave History</div>
+          <button class="btn btn-ghost btn-xs admin-only" onclick="openAddLeave()">+ Add Entry</button>
+        </div>
+        <div class="tw">
+          <table>
+            <thead><tr>
+              <th>Type</th><th>From</th><th>To</th><th>Days</th><th>Notes</th><th>Status</th><th>Recorded</th><th class="admin-only">Actions</th>
+            </tr></thead>
+            <tbody id="staffHistory"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="noStaffMsg" style="display:none;text-align:center;padding:60px 0;color:var(--muted)">
+        ☝️ Select a staff member above to view their balance and history
+      </div>
+    </div>
+
+    <!-- ── ALL RECORDS ── -->
+    <div class="page" id="page-records">
+      <div class="page-header">
+        <div class="page-title">All Records</div>
+        <div class="page-sub">Complete leave history across all staff</div>
+      </div>
+      <div class="fb">
+        <select id="fStaff" onchange="renderRecords()"><option value="">All Staff</option></select>
+        <select id="fStatus" onchange="renderRecords()">
+          <option value="">All Statuses</option>
+          <option>Booked</option><option>Taken</option><option>Cancelled</option>
+        </select>
+        <select id="fType" onchange="renderRecords()">
+          <option value="">All Types</option>
+          <option>Annual Leave</option><option>Sick Leave</option>
+          <option>Maternity Leave</option><option>Paternity Leave</option>
+          <option>Compassionate Leave</option><option>Unpaid Leave</option>
+          <option>Study Leave</option><option>Off Day</option><option>Other</option>
+        </select>
+      </div>
+      <div class="tw">
+        <table>
+          <thead><tr>
+            <th>Staff</th><th>Type</th><th>From</th><th>To</th>
+            <th>Days</th><th>Notes</th><th>Status</th><th>Recorded</th>
+            <th class="admin-only">Actions</th>
+          </tr></thead>
+          <tbody id="allRecs"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── CALENDAR ── -->
+    <div class="page" id="page-calendar">
+      <div class="page-header">
+        <div class="page-title">Leave Calendar</div>
+        <div class="page-sub">Red = someone on leave. Orange = public holiday. Click a day for details.</div>
+      </div>
+      <div id="bigCalWrap"></div>
+    </div>
+
+    <!-- ── PUBLIC HOLIDAYS ── -->
+    <div class="page" id="page-holidays">
+      <div class="page-header">
+        <div class="page-title">🇰🇪 Kenya Public Holidays</div>
+        <div class="page-sub">Reference only — public holidays do not affect leave or off-day balances</div>
+      </div>
+      <div class="callout callout-yellow" style="margin-bottom:20px">
+        ℹ️ These dates are shown on the calendar in orange for reference. They do <strong>not</strong> deduct from anyone's leave or off-day balance.
+      </div>
+      <div class="sh">
+        <div class="st" style="font-size:15px">Holidays</div>
+        <button class="btn btn-ghost btn-xs admin-only" onclick="openAddHoliday()">+ Add Holiday</button>
+      </div>
+      <div id="phGrid" class="ph-grid"></div>
+    </div>
+
+    <!-- PENDING APPROVALS -->
+    <div class="page admin-only-page" id="page-pending">
+      <div class="page-header"><div class="page-title">🔔 Leave Approvals</div><div class="page-sub">Review and act on staff leave requests</div></div>
+      <div id="pendingList"></div>
+    </div>
+
+    <!-- ── SETTINGS ── -->
+    <div class="page admin-only-page" id="page-settings">
+      <div class="page-header">
+        <div class="page-title">Settings</div>
+        <div class="page-sub">Manage staff, entitlements and integrations</div>
+      </div>
+
+      <!-- Staff -->
+      <div class="scard">
+        <div class="sh" style="margin-bottom:16px">
+          <div class="scard-title">👥 Staff Members</div>
+          <button class="btn btn-green btn-xs" onclick="openAddStaff()">+ Add Staff</button>
+        </div>
+        <div class="tw">
+          <table>
+            <thead><tr>
+              <th>Name</th><th>Email</th><th>Phone</th>
+              <th>Leave Days</th><th>Off Days</th><th></th>
+            </tr></thead>
+            <tbody id="staffTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Google Sheet -->
+      <div class="scard">
+        <div class="scard-title">🔗 Google Sheet Sync</div>
+        <div class="field">
+          <label>Apps Script Web App URL</label>
+          <div class="url-row">
+            <input type="text" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec"/>
+            <button class="btn btn-green btn-xs" onclick="saveScriptUrl()">Save</button>
+          </div>
+        </div>
+        <p style="font-size:11px;color:var(--muted)">Every record syncs to your Google Sheet when this URL is set.</p>
+      </div>
+
+      <!-- Admin PIN -->
+      <div class="scard">
+        <div class="scard-title">🔐 Admin Phone Number</div>
+        <p style="font-size:12px;color:var(--text2);line-height:1.7">
+          Admin access is granted to any staff member marked as <strong>Admin</strong> in the Staff table above.
+          Edit the <em>isAdmin</em> flag per person to grant or revoke admin rights.
+        </p>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+
+  <!-- MOBILE NAV -->
+  <div class="mobile-nav">
+    <button class="mnb on" data-p="dashboard" onclick="go('dashboard')"><span class="mnb-icon">🏠</span>Home</button>
+    <button class="mnb" data-p="records" onclick="go('records')"><span class="mnb-icon">📄</span>Records</button>
+    <button class="mnb" data-p="calendar" onclick="go('calendar')"><span class="mnb-icon">📅</span>Calendar</button>
+    <button class="mnb" data-p="holidays" onclick="go('holidays')"><span class="mnb-icon">🇰🇪</span>Holidays</button>
+    <button class="mnb admin-only" data-p="pending" onclick="go('pending')"><span class="mnb-icon">🔔</span>Approvals</button>
+    <button class="mnb admin-only" data-p="settings" onclick="go('settings')"><span class="mnb-icon">⚙️</span>Settings</button>
+  </div>
+
+</div><!-- /app -->
+
+<!-- ═══════════════ MODALS ═══════════════ -->
+
+<!-- Record Leave -->
+<div class="overlay" id="leaveModal">
+  <div class="modal">
+    <div class="modal-title">📝 Record Leave</div>
+    <div class="fg">
+      <div class="field full">
+        <label>Staff Member</label>
+        <select id="mStaff" onchange="computeDays()"><option value="">— Select —</option></select>
+      </div>
+      <div class="field full">
+        <label>Leave Type</label>
+        <select id="mType" onchange="computeDays()">
+          <option>Annual Leave</option><option>Sick Leave</option>
+          <option>Maternity Leave</option><option>Paternity Leave</option>
+          <option>Compassionate Leave</option><option>Unpaid Leave</option>
+          <option>Study Leave</option><option>Off Day</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Start Date</label>
+        <input type="date" id="mStart" onchange="computeDays()"/>
+      </div>
+      <div class="field">
+        <label>End Date</label>
+        <input type="date" id="mEnd" onchange="computeDays()"/>
+      </div>
+      <div class="full" id="dayPreview" style="display:none;margin-bottom:18px"></div>
+      <div class="full" id="balWarn" style="display:none;margin-bottom:14px"></div>
+      <div class="field full">
+        <label>Status</label>
+        <select id="mStatus">
+          <option value="Booked">Booked — upcoming (days NOT deducted yet)</option>
+          <option value="Taken">Taken — already gone (days deducted)</option>
+        </select>
+      </div>
+      <div class="field full">
+        <label>Notes (optional)</label>
+        <textarea id="mNotes" placeholder="Any notes..."></textarea>
+      </div>
+    </div>
+    <div class="ma">
+      <button class="btn btn-ghost" onclick="closeModal('leaveModal')">Cancel</button>
+      <button class="btn btn-primary" id="saveLeaveBtn" onclick="saveLeave()" style="width:auto">
+        <span class="spin" id="saveSpin"></span>Save Record
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Staff -->
+<div class="overlay" id="staffModal">
+  <div class="modal">
+    <div class="modal-title">👤 Add Staff Member</div>
+    <div class="fg">
+      <div class="field full">
+        <label>Full Name</label>
+        <input type="text" id="nsName" placeholder="e.g. Hellen Njue"/>
+      </div>
+      <div class="field full">
+        <label>Email Address</label>
+        <input type="email" id="nsEmail" placeholder="e.g. hellen.njue@ipsos.com"/>
+      </div>
+      <div class="field full">
+        <label>Phone Number (used to log in)</label>
+        <input type="tel" id="nsPhone" placeholder="e.g. 0702020610"/>
+      </div>
+      <div class="field">
+        <label>Annual Leave Entitlement (days)</label>
+        <input type="number" id="nsLeave" value="21" min="1"/>
+      </div>
+      <div class="field">
+        <label>Off Day Entitlement (days)</label>
+        <input type="number" id="nsOff" value="10" min="0"/>
+      </div>
+      <div class="field full" style="display:flex;align-items:center;gap:12px;margin-top:4px">
+        <input type="checkbox" id="nsAdmin" style="width:18px;height:18px;accent-color:var(--accent);margin:0"/>
+        <label for="nsAdmin" style="text-transform:none;letter-spacing:0;font-size:13px;color:var(--text);cursor:pointer">Grant admin access</label>
+      </div>
+    </div>
+    <div class="ma">
+      <button class="btn btn-ghost" onclick="closeModal('staffModal')">Cancel</button>
+      <button class="btn btn-green" onclick="confirmAddStaff()">Add Staff</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Staff -->
+<div class="overlay" id="editStaffModal">
+  <div class="modal">
+    <div class="modal-title">✏️ Edit Staff Member</div>
+    <input type="hidden" id="editStaffKey"/>
+    <div class="fg">
+      <div class="field full">
+        <label>Full Name</label>
+        <input type="text" id="esName"/>
+      </div>
+      <div class="field full">
+        <label>Email Address</label>
+        <input type="email" id="esEmail"/>
+      </div>
+      <div class="field full">
+        <label>Phone Number</label>
+        <input type="tel" id="esPhone"/>
+      </div>
+      <div class="field">
+        <label>Annual Leave Entitlement</label>
+        <input type="number" id="esLeave" min="1"/>
+      </div>
+      <div class="field">
+        <label>Off Day Entitlement</label>
+        <input type="number" id="esOff" min="0"/>
+      </div>
+      <div class="field full" style="display:flex;align-items:center;gap:12px">
+        <input type="checkbox" id="esAdmin" style="width:18px;height:18px;accent-color:var(--accent);margin:0"/>
+        <label for="esAdmin" style="text-transform:none;letter-spacing:0;font-size:13px;color:var(--text);cursor:pointer">Admin access</label>
+      </div>
+    </div>
+    <div class="ma">
+      <button class="btn btn-ghost" onclick="closeModal('editStaffModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmEditStaff()" style="width:auto">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cancel Leave -->
+<div class="overlay" id="cancelModal">
+  <div class="modal">
+    <div class="modal-title">⚠️ Cancel this record?</div>
+    <div class="callout callout-red" style="margin-bottom:20px">
+      The leave entry will be marked <strong>Cancelled</strong>.<br>
+      Any deducted days will be restored to the balance.
+    </div>
+    <div class="ma">
+      <button class="btn btn-ghost" onclick="closeModal('cancelModal')">Keep it</button>
+      <button class="btn btn-red" onclick="confirmCancel()">Yes, Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Holiday -->
+<div class="overlay" id="holidayModal">
+  <div class="modal">
+    <div class="modal-title">🇰🇪 Add Public Holiday</div>
+    <div class="field">
+      <label>Date</label>
+      <input type="date" id="phDate"/>
+    </div>
+    <div class="field">
+      <label>Holiday Name</label>
+      <input type="text" id="phName" placeholder="e.g. Madaraka Day"/>
+    </div>
+    <div class="ma">
+      <button class="btn btn-ghost" onclick="closeModal('holidayModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmAddHoliday()" style="width:auto">Add Holiday</button>
+    </div>
+  </div>
+</div>
+
+<!-- Staff Leave Request Modal -->
+<div class="overlay" id="staffReqModal">
+  <div class="modal">
+    <div class="modal-title">✉️ Request Leave</div>
+    <div class="callout callout-yellow" style="margin-bottom:20px">
+      Your request will be reviewed by admin. Days are <strong>not deducted</strong> until approved.
+    </div>
+    <div class="fg">
+      <div class="field full">
+        <label>Leave Type</label>
+        <select id="srType">
+          <option>Annual Leave</option><option>Sick Leave</option>
+          <option>Maternity Leave</option><option>Paternity Leave</option>
+          <option>Compassionate Leave</option><option>Unpaid Leave</option>
+          <option>Study Leave</option><option>Off Day</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field"><label>Start Date</label><input type="date" id="srStart" onchange="computeSrDays()"/></div>
+      <div class="field"><label>End Date</label><input type="date" id="srEnd" onchange="computeSrDays()"/></div>
+      <div class="full" id="srDayPreview" style="display:none;margin-bottom:16px"></div>
+      <div class="field full"><label>Reason / Notes</label><textarea id="srNotes" placeholder="Brief reason for your request..."></textarea></div>
+    </div>
+    <div class="ma">
+      <button class="btn btn-ghost" onclick="closeModal('staffReqModal')">Cancel</button>
+      <button class="btn" id="srSubmitBtn" onclick="submitStaffRequest()" style="background:var(--purple);color:#fff;width:auto">
+        <span class="spin spin-white" id="srSpin"></span>Submit Request
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Day Detail Modal -->
+<div class="overlay" id="dayDetailModal">
+  <div class="modal" style="width:440px">
+    <div class="modal-title" id="dayDetailTitle">📅 Leave Details</div>
+    <div id="dayDetailBody"></div>
+    <div class="ma" style="margin-top:20px">
+      <button class="btn btn-ghost" onclick="closeModal('dayDetailModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Loading overlay -->
+<div id="loadingOverlay" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:16px">
+  <div style="width:40px;height:40px;border:3px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite"></div>
+  <div style="color:var(--text2);font-size:14px">Loading LeaveDesk…</div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+//  LeaveDesk — Core Logic
+// ══════════════════════════════════════════════
+
+// ── BOOTSTRAP ADMIN ─────────────────────────
+// Hardcoded fallback — always works even if no staff in DB
+const BOOTSTRAP_ADMIN = {
+  id: 'bootstrap_admin',
+  name: 'Admin',
+  email: 'hellen.njue@ipsos.com',
+  phone: '0702020611',
+  leaveEnt: 21, offEnt: 10,
+  isAdmin: true
+};
+
+// ── STATE ────────────────────────────────────
+let staffList = [];
+let recs      = [];
+let requests  = [];
+let holidays  = [];
+let currentUser = null;
+let cancelId  = null;
+let calYear, calMonth;
+let _dbReady  = false;
+
+// ── INIT ─────────────────────────────────────
+window.onload = () => {
+  // Load holidays from localStorage as fast cache (non-critical)
+  holidays = JSON.parse(localStorage.getItem('ld_ph') || JSON.stringify(defaultHolidays()));
+
+  // Check for saved session
+  const savedId   = localStorage.getItem('ld_session');
+  const savedUser = localStorage.getItem('ld_session_user');
+
+  if (savedId && savedUser) {
+    currentUser = JSON.parse(savedUser);
+    showLoadingScreen();
+    // Wait for Firebase then load data
+    waitForFirebase(() => loadAllData(() => startApp()));
+    return;
+  }
+  // No session — just show login (Firebase loads after login)
+};
+
+function showLoadingScreen() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('loadingOverlay').style.display = 'flex';
+}
+
+function waitForFirebase(cb) {
+  if (window._fbReady) { cb(); return; }
+  document.addEventListener('fb-ready', cb, { once: true });
+  // Timeout fallback — use localStorage cache after 2s
+  setTimeout(() => {
+    if (!window._fbReady) {
+      console.warn('Firebase timeout — using local cache');
+      loadFromCache();
+      startApp();
+    }
+  }, 2000);
+}
+
+function loadFromCache() {
+  staffList = JSON.parse(localStorage.getItem('ld_staff2') || '[]');
+  recs      = JSON.parse(localStorage.getItem('ld_recs')   || '[]');
+  requests  = JSON.parse(localStorage.getItem('ld_reqs')   || '[]');
+}
+
+async function loadAllData(cb) {
+  try {
+    const db = window._db;
+    const { collection, getDocs } = window._fs;
+
+    const [staffSnap, recsSnap, reqsSnap, phSnap] = await Promise.all([
+      getDocs(collection(db, 'ld_staff')),
+      getDocs(collection(db, 'ld_records')),
+      getDocs(collection(db, 'ld_requests')),
+      getDocs(collection(db, 'ld_holidays')),
+    ]);
+
+    staffList = staffSnap.docs.map(d => d.data());
+    recs      = recsSnap.docs.map(d => d.data());
+    requests  = reqsSnap.docs.map(d => d.data());
+    if (!phSnap.empty) holidays = phSnap.docs.map(d => d.data());
+
+    // Cache locally for offline resilience
+    localStorage.setItem('ld_staff2', JSON.stringify(staffList));
+    localStorage.setItem('ld_recs',   JSON.stringify(recs));
+    localStorage.setItem('ld_reqs',   JSON.stringify(requests));
+    localStorage.setItem('ld_ph',     JSON.stringify(holidays));
+
+    // Refresh currentUser from fresh staff data (picks up any edits)
+    if (currentUser && currentUser.id !== 'bootstrap_admin') {
+      const fresh = staffList.find(s => s.id === currentUser.id);
+      if (fresh) { currentUser = fresh; localStorage.setItem('ld_session_user', JSON.stringify(fresh)); }
+    }
+  } catch(e) {
+    console.warn('Firestore load failed, using cache:', e);
+    loadFromCache();
+  }
+  if (cb) cb();
+}
+
+function defaultHolidays() {
+  return [
+    {date:'2025-01-01',name:"New Year's Day"},
+    {date:'2025-04-18',name:'Good Friday'},
+    {date:'2025-04-21',name:'Easter Monday'},
+    {date:'2025-05-01',name:'Labour Day'},
+    {date:'2025-06-01',name:'Madaraka Day'},
+    {date:'2025-06-20',name:'Eid al-Adha (est.)'},
+    {date:'2025-10-10',name:'Huduma Day'},
+    {date:'2025-10-20',name:'Mashujaa Day'},
+    {date:'2025-12-12',name:'Jamhuri Day'},
+    {date:'2025-12-25',name:'Christmas Day'},
+    {date:'2025-12-26',name:'Boxing Day'},
+    {date:'2026-01-01',name:"New Year's Day"},
+    {date:'2026-04-03',name:'Good Friday'},
+    {date:'2026-04-06',name:'Easter Monday'},
+    {date:'2026-05-01',name:'Labour Day'},
+    {date:'2026-06-01',name:'Madaraka Day'},
+    {date:'2026-10-10',name:'Huduma Day'},
+    {date:'2026-10-20',name:'Mashujaa Day'},
+    {date:'2026-12-12',name:'Jamhuri Day'},
+    {date:'2026-12-25',name:'Christmas Day'},
+    {date:'2026-12-26',name:'Boxing Day'},
+  ];
+}
+
+// ── AUTH ─────────────────────────────────────
+async function doLogin() {
+  const btn   = document.querySelector('#loginScreen .btn-primary');
+  const phone = document.getElementById('loginPhone').value.trim().replace(/\s/g,'');
+  const errEl = document.getElementById('loginErr');
+  errEl.style.display = 'none';
+  if (!phone) { errEl.style.display='block'; errEl.textContent='Enter your phone number.'; return; }
+
+  // 1. Bootstrap admin check (no Firebase needed)
+  if (phone === BOOTSTRAP_ADMIN.phone) {
+    currentUser = BOOTSTRAP_ADMIN;
+    localStorage.setItem('ld_session', BOOTSTRAP_ADMIN.id);
+    localStorage.setItem('ld_session_user', JSON.stringify(BOOTSTRAP_ADMIN));
+    btn.disabled = true; btn.textContent = 'Loading…';
+    waitForFirebase(() => loadAllData(() => { btn.disabled=false; btn.textContent='Sign In'; startApp(); }));
+    return;
+  }
+
+  // 2. Try Firebase staff list
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  try {
+    await new Promise((res,rej) => {
+      if (window._fbReady) { res(); return; }
+      document.addEventListener('fb-ready', res, { once: true });
+      setTimeout(rej, 6000);
+    });
+    await loadAllData(null);
+  } catch(e) {
+    // Firebase not ready — fall back to local cache
+    loadFromCache();
+  }
+
+  const user = staffList.find(s => s.phone.replace(/\s/g,'') === phone);
+  btn.disabled = false; btn.textContent = 'Sign In';
+  if (!user) {
+    errEl.style.display='block';
+    errEl.textContent='Phone number not recognised. Contact your admin.';
+    return;
+  }
+  currentUser = user;
+  localStorage.setItem('ld_session', user.id);
+  localStorage.setItem('ld_session_user', JSON.stringify(user));
+  startApp();
+}
+
+function logout() {
+  localStorage.removeItem('ld_session');
+  localStorage.removeItem('ld_session_user');
+  currentUser = null;
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginPhone').value = '';
+}
+
+function startApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('loadingOverlay').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+
+  // Greeting
+  const h = new Date().getHours();
+  const greet = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('greetingText').textContent = greet + ', ' + currentUser.name + '! 👋';
+  const now = new Date();
+  document.getElementById('greetingDate').textContent =
+    now.toLocaleDateString('en-KE', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  // Sidebar user
+  document.getElementById('sidebarName').textContent = currentUser.name;
+  document.getElementById('sidebarRole').innerHTML = currentUser.email +
+    (currentUser.isAdmin ? '<span class="admin-badge">ADMIN</span>' : '<span class="staff-badge">STAFF</span>');
+
+  // Show/hide admin elements
+  document.querySelectorAll('.admin-only').forEach(el => {
+    el.style.display = currentUser.isAdmin ? '' : 'none';
+  });
+  document.querySelectorAll('.admin-only-page').forEach(el => {
+    el.style.display = currentUser.isAdmin ? '' : 'none';
+  });
+  // Show Request Leave button for staff
+  const reqBtn = document.getElementById('reqLeaveBtn');
+  if (reqBtn) reqBtn.style.display = currentUser.isAdmin ? 'none' : 'inline-flex';
+  if (currentUser.isAdmin) updatePendingBadge();
+
+  // Init calendar month
+  const d = new Date();
+  calYear = d.getFullYear(); calMonth = d.getMonth();
+
+  syncDropdowns();
+  go('dashboard');
+}
+
+// ── NAV ──────────────────────────────────────
+function go(id) {
+  // Block non-admins from settings
+  if (id === 'settings' && !currentUser.isAdmin) return;
+
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.nb,.mnb').forEach(b => b.classList.remove('on'));
+  document.getElementById('page-'+id).classList.add('on');
+  document.querySelectorAll('[data-p="'+id+'"]').forEach(b => b.classList.add('on'));
+
+  if (id==='dashboard') renderDashboard();
+  if (id==='records')   renderRecords();
+  if (id==='calendar')  renderBigCalendar();
+  if (id==='holidays')  renderHolidays();
+  if (id==='settings')  renderSettings();
+  if (id==='pending')   renderPending();
+}
+
+// ── DAY COUNTERS ─────────────────────────────
+// Leave: every day Mon–Sun counts (no Sundays excluded) — public holidays not deducted either
+function leaveDays(s, e) {
+  return Math.round((new Date(e) - new Date(s)) / 86400000) + 1;
+}
+// Off day: same — every calendar day
+function calDays(s, e) {
+  return Math.round((new Date(e) - new Date(s)) / 86400000) + 1;
+}
+
+// ── AUTO-PROMOTE Booked → Taken ──────────────
+function autoPromote() {
+  const today = new Date().toISOString().slice(0,10);
+  let changed = false;
+  recs.forEach(r => {
+    if (r.status === 'Booked' && r.startDate <= today) { r.status='Taken'; changed=true; }
+  });
+  if (changed) persist();
+}
+
+// ── BALANCE ──────────────────────────────────
+function bal(staffName) {
+  autoPromote();
+  const s = staffList.find(x => x.name === staffName) || {};
+  const leaveEnt = s.leaveEnt || 21;
+  const offEnt   = s.offEnt   || 10;
+  const mine = recs.filter(r => r.staff === staffName && r.status !== 'Cancelled');
+
+  const leaveTaken  = mine.filter(r=>r.type!=='Off Day'&&r.status==='Taken') .reduce((a,r)=>a+r.days,0);
+  const leaveBooked = mine.filter(r=>r.type!=='Off Day'&&r.status==='Booked').reduce((a,r)=>a+r.days,0);
+  const leaveAvail  = leaveEnt - leaveTaken;
+
+  const offTaken  = mine.filter(r=>r.type==='Off Day'&&r.status==='Taken') .reduce((a,r)=>a+r.days,0);
+  const offBooked = mine.filter(r=>r.type==='Off Day'&&r.status==='Booked').reduce((a,r)=>a+r.days,0);
+  const offAvail  = offEnt - offTaken;
+
+  return {leaveEnt,leaveBooked,leaveTaken,leaveAvail,offEnt,offTaken,offBooked,offAvail};
+}
+
+// ── WHO'S ON LEAVE TODAY ─────────────────────
+function onToday() {
+  const t = new Date().toISOString().slice(0,10);
+  return recs.filter(r => r.status!=='Cancelled' && r.startDate<=t && r.endDate>=t);
+}
+
+function chipClass(type) {
+  if (type==='Off Day') return 'chip chip-purple';
+  if (type==='Sick Leave') return 'chip chip-red';
+  if (type==='Maternity Leave'||type==='Paternity Leave') return 'chip chip-blue';
+  return 'chip chip-yellow';
+}
+
+// ── DASHBOARD ────────────────────────────────
+function renderDashboard() {
+  // On leave today
+  let onLeaveList = onToday();
+  if (!currentUser.isAdmin) onLeaveList = onLeaveList.filter(r => r.staff === currentUser.name);
+
+  const chipEl = document.getElementById('onLeaveNow');
+  chipEl.innerHTML = onLeaveList.length
+    ? onLeaveList.map(r =>
+        '<span class="'+chipClass(r.type)+'">'+
+        (currentUser.isAdmin ? r.staff+' · ' : '') + r.type +
+        '</span>'
+      ).join('')
+    : '<span style="font-size:12px;color:var(--muted)">Nobody on leave today 💪</span>';
+
+  // Which staff member to show
+  let name;
+  if (currentUser.isAdmin) {
+    name = document.getElementById('staffSelect').value;
+  } else {
+    name = currentUser.name;
+  }
+
+  const statsEl  = document.getElementById('staffStats');
+  const noStaff  = document.getElementById('noStaffMsg');
+
+  if (!name) {
+    statsEl.style.display='none';
+    noStaff.style.display='block';
+    return;
+  }
+  statsEl.style.display='block';
+  noStaff.style.display='none';
+
+  document.getElementById('histTitle').textContent = currentUser.isAdmin ? name+"'s Leave History" : 'My Leave History';
+
+  const b = bal(name);
+  document.getElementById('sTotal').textContent  = b.leaveEnt;
+  document.getElementById('sTaken').textContent  = b.leaveTaken;
+  document.getElementById('sAvail').textContent  = b.leaveAvail;
+  document.getElementById('sBooked').textContent = b.leaveBooked;
+  document.getElementById('odTotal').textContent  = b.offEnt;
+  document.getElementById('odTaken').textContent  = b.offTaken;
+  document.getElementById('odBooked').textContent = b.offBooked;
+  document.getElementById('odAvail').textContent  = b.offAvail;
+
+  const mine = recs.filter(r=>r.staff===name).slice().reverse();
+  const tbody = document.getElementById('staffHistory');
+  tbody.innerHTML = mine.length
+    ? mine.map(r=>rowHtml(r,false)).join('')
+    : '<tr><td colspan="8" class="empty">No leave records yet.</td></tr>';
+}
+
+// ── RECORDS PAGE ─────────────────────────────
+function renderRecords() {
+  syncDropdowns();
+  const fs  = document.getElementById('fStaff').value;
+  const fst = document.getElementById('fStatus').value;
+  const ft  = document.getElementById('fType').value;
+  let list = [...recs].reverse();
+  if (!currentUser.isAdmin) list = list.filter(r=>r.staff===currentUser.name);
+  if (fs)  list = list.filter(r=>r.staff===fs);
+  if (fst) list = list.filter(r=>r.status===fst);
+  if (ft)  list = list.filter(r=>r.type===ft);
+  const tbody = document.getElementById('allRecs');
+  tbody.innerHTML = list.length
+    ? list.map(r=>rowHtml(r,true)).join('')
+    : '<tr><td colspan="9" class="empty">No records found.</td></tr>';
+}
+
+function rowHtml(r, showStaff) {
+  const today = new Date().toISOString().slice(0,10);
+  const canCancel = r.startDate > today; // can only cancel before start date
+
+  const sb =
+    r.status==='Taken'     ? '<span class="badge b-taken">✓ Taken</span>'      :
+    r.status==='Booked'    ? '<span class="badge b-booked">📌 Booked</span>'   :
+    r.status==='Cancelled' ? '<span class="badge b-cancelled">✕ Cancelled</span>' : '';
+
+  const typeDisp = r.type==='Off Day'
+    ? '<span class="badge b-offday">☀️ Off Day</span>'
+    : '<span class="badge b-leave">'+r.type+'</span>';
+
+  let acts = '';
+  if (currentUser.isAdmin && r.status!=='Cancelled') {
+    if (canCancel) {
+      acts += '<button class="btn btn-red btn-xs" onclick="openCancel(\''+r.id+'\')">Cancel</button>';
+    } else if (r.status==='Booked') {
+      acts += '<span style="font-size:11px;color:var(--muted)">Started</span>';
+    }
+  }
+
+  return '<tr>'+
+    (showStaff ? '<td><strong>'+r.staff+'</strong></td>' : '')+
+    '<td>'+typeDisp+'</td>'+
+    '<td>'+r.startDate+'</td>'+
+    '<td>'+r.endDate+'</td>'+
+    '<td><strong>'+r.days+'</strong></td>'+
+    '<td style="color:var(--text2)">'+(r.notes||'—')+'</td>'+
+    '<td>'+sb+'</td>'+
+    '<td style="color:var(--text2)">'+r.recorded+'</td>'+
+    (currentUser.isAdmin ? '<td>'+acts+'</td>' : '')+
+    '</tr>';
+}
+
+// ── BIG CALENDAR ─────────────────────────────
+function renderBigCalendar() {
+  const wrap = document.getElementById('bigCalWrap');
+  const firstDay = new Date(calYear, calMonth, 1);
+  const lastDay  = new Date(calYear, calMonth+1, 0);
+  const monthName = firstDay.toLocaleDateString('en-KE',{month:'long',year:'numeric'});
+  const today = new Date().toISOString().slice(0,10);
+
+  // Build leave date map
+  const leaveDayMap = {}; // 'YYYY-MM-DD' → [names]
+  const leaveSource = recs; // all users see everyone on calendar
+  leaveSource.filter(r=>r.status!=='Cancelled').forEach(r => {
+    let d = new Date(r.startDate), end = new Date(r.endDate);
+    while (d <= end) {
+      const iso = d.toISOString().slice(0,10);
+      if (!leaveDayMap[iso]) leaveDayMap[iso] = [];
+      if (!leaveDayMap[iso].includes(r.staff)) leaveDayMap[iso].push(r.staff + (r.type==='Off Day'?' (Off Day)':''));
+      d.setDate(d.getDate()+1);
+    }
+  });
+
+  const phSet = {};
+  holidays.forEach(h => { phSet[h.date] = h.name; });
+
+  // Start of grid (Sunday of week containing firstDay)
+  const startOffset = firstDay.getDay(); // 0=Sun
+
+  let html = `
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:900px">
+    <div class="cal-header">
+      <div class="cal-title">${monthName}</div>
+      <div class="cal-nav">
+        <button onclick="calPrev()">‹</button>
+        <button onclick="calToday()">Today</button>
+        <button onclick="calNext()">›</button>
+      </div>
+    </div>
+    <div class="cal-grid">
+      ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<div class="cal-day-name">${d}</div>`).join('')}
+  `;
+
+  // Blank cells before month start
+  for (let i=0; i<startOffset; i++) {
+    html += '<div class="cal-day other-month"></div>';
+  }
+
+  for (let day=1; day<=lastDay.getDate(); day++) {
+    const iso = calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+    const isToday  = iso === today;
+    const hasLeave = !!leaveDayMap[iso];
+    const isPH     = !!phSet[iso];
+    let cls = 'cal-day';
+    if (isToday)  cls += ' today';
+    if (hasLeave) cls += ' has-leave';
+    if (isPH && !hasLeave) cls += ' is-ph';
+
+    let title = '';
+    if (hasLeave) title = leaveDayMap[iso].join(', ');
+    if (isPH)     title = (title ? title+' | ' : '') + '🇰🇪 '+phSet[iso];
+
+    html += `<div class="${cls}" title="${title}" onclick="showDayDetail('${iso}')">${day}`;
+    if (hasLeave || isPH) html += '<div class="dot"></div>';
+    html += '</div>';
+  }
+
+  // Fill remaining cells
+  const total = startOffset + lastDay.getDate();
+  const remainder = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for (let i=0; i<remainder; i++) html += '<div class="cal-day other-month"></div>';
+
+  html += `</div>
+    <div class="cal-legend">
+      <div class="cal-leg-item"><div class="cal-leg-dot" style="background:rgba(248,113,113,.4)"></div>On Leave</div>
+      <div class="cal-leg-item"><div class="cal-leg-dot" style="background:rgba(245,200,66,.3)"></div>Today</div>
+      <div class="cal-leg-item"><div class="cal-leg-dot" style="background:transparent;border:1px solid var(--orange);color:var(--orange)"></div><span style="color:var(--orange)">Public Holiday</span></div>
+    </div>
+  </div>`;
+  wrap.innerHTML = html;
+}
+
+function calPrev()  { calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderBigCalendar(); }
+function calNext()  { calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderBigCalendar(); }
+function calToday() { const d=new Date(); calYear=d.getFullYear(); calMonth=d.getMonth(); renderBigCalendar(); }
+
+function showDayDetail(iso) {
+  const onLeave = recs.filter(r=>r.status!=='Cancelled'&&r.startDate<=iso&&r.endDate>=iso);
+  const ph = holidays.find(h=>h.date===iso);
+  if (!onLeave.length && !ph) return;
+  const d = new Date(iso+'T12:00:00');
+  const label = d.toLocaleDateString('en-KE',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('dayDetailTitle').textContent = '📅 '+label;
+  let body = '';
+  if (ph) body += '<div class="callout callout-yellow" style="margin-bottom:12px">🇰🇪 Public Holiday: <strong>'+ph.name+'</strong></div>';
+  if (onLeave.length) {
+    body += '<div style="margin-bottom:8px;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text2);font-weight:600">On Leave</div>';
+    body += onLeave.map(r =>
+      '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card);border-radius:10px;margin-bottom:7px">'+
+      '<div style="width:36px;height:36px;border-radius:50%;background:rgba(248,113,113,.2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">👤</div>'+
+      '<div><div style="font-weight:600;font-size:13px">'+r.staff+'</div>'+
+      '<div style="font-size:11px;color:var(--text2)">'+r.type+' · '+r.startDate+' → '+r.endDate+'</div></div>'+
+      '</div>'
+    ).join('');
+  } else {
+    body += '<div style="color:var(--muted);font-size:13px;text-align:center;padding:16px">Nobody on leave this day 👍</div>';
+  }
+  document.getElementById('dayDetailBody').innerHTML = body;
+  document.getElementById('dayDetailModal').classList.add('show');
+}
+
+// ── PUBLIC HOLIDAYS ───────────────────────────
+function renderHolidays() {
+  const sorted = [...holidays].sort((a,b)=>a.date.localeCompare(b.date));
+  const grid = document.getElementById('phGrid');
+  grid.innerHTML = sorted.length ? sorted.map((h,i) => `
+    <div class="ph-item">
+      <div class="ph-date">${formatDate(h.date)}</div>
+      <div class="ph-name">${h.name}</div>
+      ${currentUser.isAdmin ? '<button class="ph-del" onclick="removeHoliday(\''+h.date+'\')">×</button>' : ''}
+    </div>`).join('')
+    : '<div style="color:var(--muted);font-size:13px;padding:20px">No holidays added.</div>';
+}
+
+function formatDate(iso) {
+  return new Date(iso+'T12:00:00').toLocaleDateString('en-KE',{day:'numeric',month:'short',year:'numeric'});
+}
+
+function openAddHoliday() {
+  document.getElementById('phDate').value='';
+  document.getElementById('phName').value='';
+  document.getElementById('holidayModal').classList.add('show');
+}
+function confirmAddHoliday() {
+  const date = document.getElementById('phDate').value;
+  const name = document.getElementById('phName').value.trim();
+  if (!date||!name) { toast('Fill in both fields','err'); return; }
+  if (holidays.find(h=>h.date===date)) { toast('Holiday already exists for that date','err'); return; }
+  holidays.push({date,name});
+  holidays.sort((a,b)=>a.date.localeCompare(b.date));
+  persistHolidays();
+  closeModal('holidayModal');
+  renderHolidays();
+  toast('Holiday added','ok');
+}
+function removeHoliday(date) {
+  if (!confirm('Remove this holiday?')) return;
+  holidays = holidays.filter(h=>h.date!==date);
+  persistHolidays();
+  renderHolidays();
+  toast('Removed','ok');
+}
+
+// ── SETTINGS ─────────────────────────────────
+function renderSettings() {
+  document.getElementById('scriptUrlInput').value = scriptUrl;
+  const tbody = document.getElementById('staffTableBody');
+  tbody.innerHTML = staffList.length ? staffList.map(s => `
+    <tr>
+      <td><strong>${s.name}</strong>${s.isAdmin?'<span class="admin-badge" style="margin-left:6px">ADMIN</span>':''}</td>
+      <td style="color:var(--text2)">${s.email}</td>
+      <td style="color:var(--text2)">${s.phone}</td>
+      <td>${s.leaveEnt||21} days</td>
+      <td>${s.offEnt||10} days</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-ghost btn-xs" onclick="openEditStaff('${s.id}')">Edit</button>
+        <button class="btn btn-red btn-xs" style="margin-left:4px" onclick="removeStaff('${s.id}')">Remove</button>
+      </td>
+    </tr>`).join('')
+    : '<tr><td colspan="6" class="empty">No staff added yet. Click "+ Add Staff" to get started.</td></tr>';
+}
+
+// ── LEAVE MODAL ───────────────────────────────
+function openAddLeave() {
+  if (!currentUser.isAdmin) return;
+  syncDropdowns();
+  const cur = document.getElementById('staffSelect') ? document.getElementById('staffSelect').value : '';
+  if (cur) document.getElementById('mStaff').value = cur;
+  document.getElementById('mType').value   = 'Annual Leave';
+  document.getElementById('mStart').value  = '';
+  document.getElementById('mEnd').value    = '';
+  document.getElementById('mStatus').value = 'Booked';
+  document.getElementById('mNotes').value  = '';
+  document.getElementById('dayPreview').style.display = 'none';
+  document.getElementById('balWarn').style.display    = 'none';
+  document.getElementById('saveLeaveBtn').disabled    = false;
+  document.getElementById('saveSpin').style.display   = 'none';
+  document.getElementById('leaveModal').classList.add('show');
+}
+
+function computeDays() {
+  const s    = document.getElementById('mStart').value;
+  const e    = document.getElementById('mEnd').value;
+  const type = document.getElementById('mType').value;
+  const isOff = type === 'Off Day';
+  const prev  = document.getElementById('dayPreview');
+  const warn  = document.getElementById('balWarn');
+  warn.style.display = 'none';
+  if (!s||!e||new Date(e)<new Date(s)) { prev.style.display='none'; return; }
+
+  const days = calDays(s,e); // same either way now
+  prev.style.display = 'block';
+  prev.innerHTML = '<div class="callout callout-green">📅 <strong>'+days+'</strong> day(s) — '+
+    (isOff ? 'every calendar day counted' : 'every calendar day counted (Mon–Sun)')+
+    '</div>';
+
+  const name = document.getElementById('mStaff').value;
+  if (name && days > 0) {
+    const b = bal(name);
+    const avail = isOff ? b.offAvail : b.leaveAvail;
+    if (days > avail) {
+      warn.style.display = 'block';
+      warn.innerHTML = '<div class="callout callout-red">⚠️ Only <strong>'+avail+'</strong> '+
+        (isOff?'off':'leave')+' day(s) remaining for '+name+'</div>';
+    }
+  }
+}
+
+async function saveLeave() {
+  const btn = document.getElementById('saveLeaveBtn');
+  if (btn.disabled) return;
+
+  const staffName = document.getElementById('mStaff').value;
+  const type      = document.getElementById('mType').value;
+  const start     = document.getElementById('mStart').value;
+  const end       = document.getElementById('mEnd').value;
+  const status    = document.getElementById('mStatus').value;
+  const notes     = document.getElementById('mNotes').value.trim();
+
+  if (!staffName) { toast('Select a staff member','err'); return; }
+  if (!start||!end) { toast('Select dates','err'); return; }
+  if (new Date(end)<new Date(start)) { toast('End must be after start','err'); return; }
+
+  const days = calDays(start,end);
+
+  btn.disabled = true;
+  document.getElementById('saveSpin').style.display = 'inline-block';
+
+  const rec = {
+    id: Date.now().toString(),
+    staff:staffName, type, startDate:start, endDate:end,
+    days, notes, status,
+    recorded: new Date().toLocaleDateString('en-KE')
+  };
+  recs.push(rec);
+  persist();
+  await syncSheet(rec);
+
+  btn.disabled = false;
+  document.getElementById('saveSpin').style.display = 'none';
+  closeModal('leaveModal');
+  toast('Saved — '+staffName+', '+days+' day(s), '+status,'ok');
+  rerender();
+}
+
+// ── CANCEL ───────────────────────────────────
+function openCancel(id) { cancelId=id; document.getElementById('cancelModal').classList.add('show'); }
+async function confirmCancel() {
+  const r = recs.find(x=>x.id===cancelId);
+  if (!r) return;
+  r.status = 'Cancelled';
+  persist();
+  await syncSheet({...r,action:'update'});
+  closeModal('cancelModal');
+  toast('Record cancelled — days restored','ok');
+  rerender();
+}
+
+// ── STAFF MANAGEMENT ─────────────────────────
+function openAddStaff() {
+  ['nsName','nsEmail','nsPhone'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('nsLeave').value=21;
+  document.getElementById('nsOff').value=10;
+  document.getElementById('nsAdmin').checked=false;
+  document.getElementById('staffModal').classList.add('show');
+}
+function confirmAddStaff() {
+  const name  = document.getElementById('nsName').value.trim();
+  const email = document.getElementById('nsEmail').value.trim();
+  const phone = document.getElementById('nsPhone').value.trim().replace(/\s/g,'');
+  if (!name||!phone) { toast('Name and phone are required','err'); return; }
+  if (staffList.find(s=>s.phone.replace(/\s/g,'')=== phone)) { toast('Phone already registered','err'); return; }
+
+  staffList.push({
+    id: Date.now().toString(),
+    name, email, phone,
+    leaveEnt: parseInt(document.getElementById('nsLeave').value)||21,
+    offEnt:   parseInt(document.getElementById('nsOff').value)||10,
+    isAdmin:  document.getElementById('nsAdmin').checked,
+  });
+  persistStaff(); syncDropdowns(); closeModal('staffModal'); renderSettings();
+  toast(name+' added','ok');
+}
+
+function openEditStaff(id) {
+  const s = staffList.find(x=>x.id===id);
+  if (!s) return;
+  document.getElementById('editStaffKey').value = id;
+  document.getElementById('esName').value  = s.name;
+  document.getElementById('esEmail').value = s.email||'';
+  document.getElementById('esPhone').value = s.phone||'';
+  document.getElementById('esLeave').value = s.leaveEnt||21;
+  document.getElementById('esOff').value   = s.offEnt||10;
+  document.getElementById('esAdmin').checked = !!s.isAdmin;
+  document.getElementById('editStaffModal').classList.add('show');
+}
+function confirmEditStaff() {
+  const id = document.getElementById('editStaffKey').value;
+  const s  = staffList.find(x=>x.id===id);
+  if (!s) return;
+  const oldName = s.name;
+  s.name     = document.getElementById('esName').value.trim()||s.name;
+  s.email    = document.getElementById('esEmail').value.trim();
+  s.phone    = document.getElementById('esPhone').value.trim().replace(/\s/g,'');
+  s.leaveEnt = parseInt(document.getElementById('esLeave').value)||21;
+  s.offEnt   = parseInt(document.getElementById('esOff').value)||10;
+  s.isAdmin  = document.getElementById('esAdmin').checked;
+  // rename in records too
+  if (s.name !== oldName) recs.forEach(r=>{ if(r.staff===oldName) r.staff=s.name; });
+  persistStaff(); persist(); syncDropdowns();
+  closeModal('editStaffModal'); renderSettings();
+  toast('Updated','ok');
+}
+function removeStaff(id) {
+  const s = staffList.find(x=>x.id===id);
+  if (!s||!confirm('Remove '+s.name+'? Their leave records will remain.')) return;
+  staffList = staffList.filter(x=>x.id!==id);
+  persistStaff(); syncDropdowns(); renderSettings();
+  toast(s.name+' removed','ok');
+}
+
+// ── DROPDOWNS ────────────────────────────────
+function syncDropdowns() {
+  const names = staffList.map(s=>s.name);
+  const opts  = staffList.map(s=>'<option value="'+s.name+'">'+s.name+'</option>').join('');
+
+  const ss=document.getElementById('staffSelect');
+  if(ss){const p=ss.value;ss.innerHTML='<option value="">— Select staff member —</option>'+opts;if(p&&names.includes(p))ss.value=p;}
+
+  const ms=document.getElementById('mStaff');
+  if(ms){const p=ms.value;ms.innerHTML='<option value="">— Select —</option>'+opts;if(p&&names.includes(p))ms.value=p;}
+
+  const fs=document.getElementById('fStaff');
+  if(fs){const p=fs.value;fs.innerHTML='<option value="">All Staff</option>'+opts;if(p&&names.includes(p))fs.value=p;}
+}
+
+// ── STORAGE ──────────────────────────────────
+// ── FIRESTORE WRITE HELPERS ──────────────────
+async function fsSet(col, id, data) {
+  // Always update local cache first (instant UI)
+  // Then write to Firestore in background
+  localStorage.setItem('ld_'+col, JSON.stringify(
+    col==='staff' ? staffList : col==='recs' ? recs : col==='reqs' ? requests : holidays
+  ));
+  if (!window._db) return;
+  try {
+    const { doc, setDoc } = window._fs;
+    await setDoc(doc(window._db, 'ld_'+col, id), data);
+  } catch(e) { console.warn('Firestore write failed:', e); }
+}
+
+function persist() {
+  localStorage.setItem('ld_recs', JSON.stringify(recs));
+  recs.forEach(r => fsSet('records', r.id, r));
+}
+
+function persistReqs() {
+  localStorage.setItem('ld_reqs', JSON.stringify(requests));
+  requests.forEach(r => fsSet('requests', r.id, r));
+}
+
+function persistStaff() {
+  localStorage.setItem('ld_staff2', JSON.stringify(staffList));
+  staffList.forEach(s => fsSet('staff', s.id, s));
+}
+
+function persistHolidays() {
+  localStorage.setItem('ld_ph', JSON.stringify(holidays));
+  holidays.forEach(h => fsSet('holidays', h.date, h));
+}
+
+// Legacy Google Sheet sync — kept for compatibility, optional
+async function syncSheet(data) {
+  const url = localStorage.getItem('ld_url');
+  if (!url) return;
+  try {
+    await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  } catch(e) { console.warn('Sheet sync fail',e); }
+}
+
+function saveScriptUrl() {
+  const url=document.getElementById('scriptUrlInput').value.trim();
+  if(!url){toast('Paste the URL','err');return;}
+  localStorage.setItem('ld_url', url);
+  toast('Google Sheet URL saved ✅','ok');
+}
+
+// ── HELPERS ──────────────────────────────────
+function rerender() {
+  const id = document.querySelector('.page.on').id.replace('page-','');
+  if(id==='dashboard') renderDashboard();
+  if(id==='records')   renderRecords();
+  if(id==='calendar')  renderBigCalendar();
+  if(id==='holidays')  renderHolidays();
+  if(id==='settings')  renderSettings();
+  if(id==='pending')   renderPending();
+}
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+
+let _tt;
+function toast(msg, type='ok') {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='show '+type;
+  clearTimeout(_tt); _tt=setTimeout(()=>el.className='',3400);
+}
+// ── STAFF REQUEST ─────────────────────────────
+function openStaffRequest() {
+  document.getElementById('srType').value = 'Annual Leave';
+  document.getElementById('srStart').value = '';
+  document.getElementById('srEnd').value = '';
+  document.getElementById('srNotes').value = '';
+  document.getElementById('srDayPreview').style.display = 'none';
+  document.getElementById('srSubmitBtn').disabled = false;
+  document.getElementById('srSpin').style.display = 'none';
+  document.getElementById('staffReqModal').classList.add('show');
+}
+
+function computeSrDays() {
+  const s = document.getElementById('srStart').value;
+  const e = document.getElementById('srEnd').value;
+  const prev = document.getElementById('srDayPreview');
+  if (!s||!e||new Date(e)<new Date(s)) { prev.style.display='none'; return; }
+  const days = calDays(s,e);
+  prev.style.display='block';
+  prev.innerHTML='<div class="callout callout-green">📅 <strong>'+days+'</strong> day(s)</div>';
+}
+
+async function submitStaffRequest() {
+  const btn = document.getElementById('srSubmitBtn');
+  if (btn.disabled) return;
+  const type  = document.getElementById('srType').value;
+  const start = document.getElementById('srStart').value;
+  const end   = document.getElementById('srEnd').value;
+  const notes = document.getElementById('srNotes').value.trim();
+  if (!start||!end) { toast('Select dates','err'); return; }
+  if (new Date(end)<new Date(start)) { toast('End must be after start','err'); return; }
+  const days = calDays(start,end);
+  if (days===0) { toast('No days in that range','err'); return; }
+
+  btn.disabled=true;
+  document.getElementById('srSpin').style.display='inline-block';
+
+  const req = {
+    id: 'req_'+Date.now(),
+    staff: currentUser.name, type,
+    startDate: start, endDate: end, days, notes,
+    status: 'Pending',
+    requestedOn: new Date().toLocaleDateString('en-KE')
+  };
+  requests.push(req);
+  persistReqs();
+  await syncSheet(req);
+
+  btn.disabled=false;
+  document.getElementById('srSpin').style.display='none';
+  closeModal('staffReqModal');
+  toast('Request submitted! Admin will review it ✅','ok');
+}
+
+// ── PENDING APPROVALS ─────────────────────────
+function renderPending() {
+  const container = document.getElementById('pendingList');
+  if (!container) return;
+  const pending = requests.filter(r=>r.status==='Pending');
+  const handled = requests.filter(r=>r.status!=='Pending').slice().reverse();
+
+  if (!pending.length && !handled.length) {
+    container.innerHTML='<div class="empty" style="padding:60px">No leave requests yet.</div>';
+    return;
+  }
+
+  let html = '';
+  if (pending.length) {
+    html += '<div class="st" style="margin-bottom:14px">⏳ Awaiting Decision ('+pending.length+')</div>';
+    html += pending.map(r => `
+      <div style="background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:20px;margin-bottom:12px;display:flex;align-items:center;flex-wrap:wrap;gap:16px">
+        <div style="width:44px;height:44px;border-radius:50%;background:rgba(129,140,248,.2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">👤</div>
+        <div style="flex:1;min-width:200px">
+          <div style="font-weight:700;font-size:15px">${r.staff}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:3px">
+            <span class="badge b-leave" style="margin-right:6px">${r.type}</span>
+            ${r.startDate} → ${r.endDate} · <strong>${r.days} day(s)</strong>
+          </div>
+          ${r.notes ? '<div style="font-size:12px;color:var(--text2);margin-top:6px;font-style:italic;padding:6px 10px;background:var(--card);border-radius:7px">"'+r.notes+'"</div>' : ''}
+          <div style="font-size:11px;color:var(--muted);margin-top:6px">Requested: ${r.requestedOn}</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0">
+          <button class="btn btn-green btn-xs" onclick="approveRequest('${r.id}')">✓ Approve</button>
+          <button class="btn btn-red btn-xs" onclick="rejectRequest('${r.id}')">✕ Reject</button>
+        </div>
+      </div>`).join('');
+  }
+
+  if (handled.length) {
+    html += '<div class="st" style="margin-bottom:14px;margin-top:'+(pending.length?'28':'0')+'px">Handled Requests</div>';
+    html += '<div class="tw"><table><thead><tr><th>Staff</th><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Decision</th><th>Requested</th></tr></thead><tbody>';
+    html += handled.map(r => {
+      const badge = r.status==='Approved'
+        ? '<span class="badge b-taken">✓ Approved</span>'
+        : '<span class="badge b-cancelled">✕ Rejected</span>';
+      return '<tr><td><strong>'+r.staff+'</strong></td><td>'+r.type+'</td><td>'+r.startDate+'</td><td>'+r.endDate+'</td><td>'+r.days+'</td><td>'+badge+'</td><td>'+r.requestedOn+'</td></tr>';
+    }).join('');
+    html += '</tbody></table></div>';
+  }
+  container.innerHTML = html;
+}
+
+async function approveRequest(id) {
+  const req = requests.find(r=>r.id===id);
+  if (!req) return;
+  req.status = 'Approved';
+  persistReqs();
+  // Convert to an actual leave record (Booked)
+  const rec = {
+    id: Date.now().toString(),
+    staff: req.staff, type: req.type,
+    startDate: req.startDate, endDate: req.endDate,
+    days: req.days, notes: req.notes,
+    status: 'Booked',
+    recorded: new Date().toLocaleDateString('en-KE')
+  };
+  recs.push(rec);
+  persist();
+  await syncSheet({...rec, action:'approved_from_request'});
+  toast(req.staff+"'s request approved ✅", 'ok');
+  updatePendingBadge();
+  renderPending();
+}
+
+function rejectRequest(id) {
+  const req = requests.find(r=>r.id===id);
+  if (!req) return;
+  req.status = 'Rejected';
+  persistReqs();
+  toast(req.staff+"'s request rejected", 'err');
+  updatePendingBadge();
+  renderPending();
+}
+
+function updatePendingBadge() {
+  const count = requests.filter(r=>r.status==='Pending').length;
+  const badge = document.getElementById('pendingBadge');
+  if (!badge) return;
+  badge.style.display = count > 0 ? 'inline-block' : 'none';
+  badge.textContent = count;
+}
+
+</script>
+</body>
+</html>
